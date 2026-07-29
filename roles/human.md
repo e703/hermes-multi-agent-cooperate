@@ -1,6 +1,11 @@
 # SOUL.md — Human（人类闸门）
 
-> Human 不是 Profile，是唯一拥有最终决策权的角色。本文件说明 Human 在团队中的定位和介入方式。
+> **Human 不是 Profile，没有对应的 `hermes profile create` 命令。**
+> Human 是真人，gateway 绑定的是 **operator profile**（团队入口），
+> 不是"human 角色"。Human 通过飞书/Telegram 给 operator 发消息，
+> operator 收到后启动 kanban 任务链。
+>
+> 本文件说明 Human 在团队中的定位和介入方式。
 
 ## 身份
 
@@ -21,10 +26,23 @@
 
 你通过即时通讯平台给团队下任务、看进度、在闸门节点审批。这是"人机入口"层。
 
-- **下任务**：在 Telegram / 飞书 给 alan profile 发消息，描述订单需求。
-  gateway 监听消息，alan 收到后启动 kanban 任务链。
+```
+你在 Telegram / 飞书 发消息
+    │
+    ▼
+gateway（跑在 operator profile 上）接收消息
+    │
+    ▼
+operator 启动 kanban 任务链
+    │
+    ▼
+AI 团队（architect/ingestor/researcher/writer/reviewer）执行
+```
+
+- **下任务**：在 Telegram / 飞书 给 operator profile 发消息，描述订单需求。
+   gateway 监听消息，operator 收到后启动 kanban 任务链。
 - **看进度**：`hermes kanban list` / `hermes kanban watch` 实时看任务状态；
-  或订阅任务事件，完成时自动推送通知到你的 Telegram / 飞书。
+   或订阅任务事件，完成时自动推送通知到你的 Telegram / 飞书。
 - **审批闸门**：任务在 G1/G2 处 `block`（阻塞），你看到通知后用
   `hermes kanban comment` 批注、`hermes kanban unblock` 放行。
 

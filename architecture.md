@@ -40,9 +40,21 @@ Kanban 看板做任务路由与进度跟踪，用 skills/memory 做分层记忆�
 
 ---
 
-## 3. 五角色模型
+## 3. 六角色模型
 
 每个角色有明确的"负责"和"不负责"边界。从五角色起步，不要一开始开十几个角色。
+
+### 3.0 operator（团队入口）
+
+- **负责**：接收 Human 订单、启动 kanban 任务链、监控进度、闸门桥接、维护团队。
+- **不负责**：具体执行（研究/写作/审计）。
+- **成为 gateway 绑定的入口 profile**，Human 通过飞书/Telegram 向你发消息。
+- **对应原生命令**：
+  ```bash
+  hermes profile create operator --clone --no-alias \
+    --description "团队入口：接收 Human 订单、启动 kanban 任务链、监控进度；不亲自做研究/写作/审校。"
+  ```
+  description 是关键——kanban decomposer 靠它路由任务，不只看 profile 名。
 
 ### 3.1 architect（编排者 / 架构师）
 
@@ -123,7 +135,7 @@ Kanban 看板做任务路由与进度跟踪，用 skills/memory 做分层记忆�
 - Human 不是 Profile，是唯一拥有最终决策权的角色。
 - **方向性决策**（做什么、做哪个）归属于 Human。
 - **发布/交付决策**（可以发出去了）归属于 Human。
-- 介入方式：通过 Telegram / 飞书 给团队下任务、看进度、在闸门节点审批。
+- 介入方式：通过 Telegram / 飞书 给 operator profile 发消息，operator 收到后启动 kanban 任务链。
   详见 `human-gateway.md`。
 
 ---
@@ -218,4 +230,4 @@ Kanban 看板做任务路由与进度跟踪，用 skills/memory 做分层记忆�
 | Session Gate | kanban `context` | 加载项目上下文 |
 | 共享模板/红线 | `skills/` | 跨订单复用 |
 | 风格/术语记忆 | `memories/MEMORY.md` | 不含客户密件 |
-| Human 下任务/看进度 | gateway 监听 Telegram/飞书 | `hermes send` / `kanban notify-subscribe` |
+| Human 下任务/看进度 | gateway 监听 Telegram/飞书 → operator profile | `hermes send` / `kanban notify-subscribe` |

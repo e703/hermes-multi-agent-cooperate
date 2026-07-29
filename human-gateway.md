@@ -1,28 +1,44 @@
 # 人机入口：Human 通过 Telegram / 飞书介入
 
-> Human 不是 Profile，是唯一拥有最终决策权的人。本文件说明 Human 如何通过
-> 即时通讯平台给团队下任务、看进度、在闸门节点审批。
+> Human 不是 Profile，是唯一拥有最终决策权的人。**gateway 绑定的是 operator profile**，
+> 不是"human 角色"——Human 是消息的发送方，operator 是接收方。
+> 本文件说明 Human 如何通过即时通讯平台给团队下任务、看进度、在闸门节点审批。
 
 ---
 
-## 当前环境状态
+## 架构关系
 
-| 平台 | 状态 | 说明 |
-|------|------|------|
-| 飞书（Feishu） | ✅ 已连接一个会话 | `feishu:oc_faa153d662ec4ae5ddcddf1be612ac4a`，插件已启用 |
-| Telegram | ⏳ 待配置 | gateway 在跑，但未配置 bot token |
+```
+    Human（真人）
+       │
+       ├─ 飞书 / Telegram 发消息
+       │
+       ▼
+    gateway（跑在 operator profile 上）
+       │
+       ├─ 接收消息 → 进入 operator 的 chat 会话
+       ├─ dispatcher 自动派发 kanban 任务给各角色
+       │
+       ▼
+    AI 团队（5 个角色，kanban worker）
+       architect / ingestor / researcher / writer / reviewer
+```
 
-> 这两个状态是 2026-07-28 查到的真实情况，部署时以 `hermes send --list` 实时输出为准。
+gateway 不是跑在"human 角色"上——human 没有 profile。gateway 跑在
+**operator profile** 上，operator 是团队的入口，接收 Human 的消息后启动
+kanban 任务链。
 
 ---
 
 ## 1. 下任务：消息 → kanban 任务链
 
-Human 在 Telegram / 飞书 给 alan profile 发消息描述订单需求。gateway 监听消息，
-alan 收到后启动 kanban 任务链（见 `deployment.md` 第三步）。
+Human 在 Telegram / 飞书 给 operator profile 发消息描述订单需求。
+gateway 监听消息，operator 收到后启动 kanban 任务链。
 
 如果想让"发消息"自动建单，可以做一个收件脚本（cron 或 webhook），把消息解析成
-`hermes kanban create` 调用。当前推荐手动：Human 发需求 → 在终端 `hermes kanban create` 起链。
+`hermes kanban create` 调用。当前推荐手动：Human 发需求 → operator 在终端 `hermes kanban create` 起链。
+
+---
 
 ## 2. 看进度：看板 + 实时流
 
@@ -36,6 +52,8 @@ hermes kanban stats         # 按状态/负责人统计
 ```
 
 如果不想盯终端，可以让关键事件推送到你的 IM。
+
+---
 
 ## 3. 闸门审批：block → comment → unblock
 
@@ -51,6 +69,8 @@ hermes kanban comment <task_id> "大纲第3章补充机房物理环境要求"
 # 放行
 hermes kanban unblock <task_id>
 ```
+
+---
 
 ## 4. 完成通知：任务跑完推送到 IM
 
@@ -85,6 +105,8 @@ hermes kanban notify-subscribe <task_id> --platform telegram \
 
 查订阅：`hermes kanban notify-list`；取消：`hermes kanban notify-unsubscribe <task_id> --platform ...`。
 
+---
+
 ## 5. Telegram 配置（当前待办）
 
 gateway 已在跑，但还没配 Telegram bot。配置步骤：
@@ -101,7 +123,9 @@ hermes gateway restart
 hermes send --list          # 应出现 telegram 目标
 ```
 
-配好后，Human 在 Telegram 给 bot 发消息，alan profile 就能收到。
+配好后，Human 在 Telegram 给 bot 发消息，operator profile 就能收到（通过 gateway 转发）。
+
+---
 
 ## 6. 飞书配置参考（已完成，备查）
 
@@ -127,6 +151,33 @@ hermes send -t feishu:<chat_id> "消息内容"
 | `FEISHU_CONNECTION_MODE` | 否（默认 websocket） | `websocket` 或 `webhook` |
 | `FEISHU_ALLOWED_USERS` | 否 | 白名单 |
 | `FEISHU_GROUP_POLICY` | 否（默认 allowlist） | `allowlist` 或 `allow_all` |
+
+---
+
+## 7. Profile 路由配置（多平台 → operator）
+
+如果同时使用飞书和 Telegram，可以配置 profile_routes 让所有消息都路由到 operator：
+
+```yaml
+# ~/.hermes/config.yaml
+gateway:
+  multiplex_profiles: true
+  profile_routes:
+    - name: human-to-operator-feishu
+      platform: feishu
+      profile: operator
+    - name: human-to-operator-telegram
+      platform: telegram
+      profile: operator
+```
+
+添加后重启 gateway：
+
+```bash
+hermes gateway restart
+```
+
+详见 `docs/profile-routing.md`。
 
 ---
 
