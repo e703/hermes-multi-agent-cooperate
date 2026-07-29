@@ -30,7 +30,26 @@ kanban 任务链。
 
 ---
 
-## 1. 下任务：消息 → kanban 任务链
+## 1. 安装 gateway
+
+首次使用需要安装 systemd 服务：
+
+```bash
+hermes gateway install
+# 回答 Y 启动服务，Y 开机自启
+
+# SSH 环境必须启用 linger，否则退出终端后 gateway 会停
+sudo loginctl enable-linger $(whoami)
+
+# 重启使配置生效
+systemctl --user restart hermes-gateway-operator.service
+```
+
+服务名称格式：`hermes-gateway-<profile名称>.service`。
+
+---
+
+## 2. 下任务：消息 → kanban 任务链
 
 Human 在 Telegram / 飞书 给 operator profile 发消息描述订单需求。
 gateway 监听消息，operator 收到后启动 kanban 任务链。
@@ -40,7 +59,7 @@ gateway 监听消息，operator 收到后启动 kanban 任务链。
 
 ---
 
-## 2. 看进度：看板 + 实时流
+## 3. 看进度：看板 + 实时流
 
 Human 可以随时查看团队进度：
 
@@ -55,7 +74,7 @@ hermes kanban stats         # 按状态/负责人统计
 
 ---
 
-## 3. 闸门审批：block → comment → unblock
+## 4. 闸门审批：block → comment → unblock
 
 任务在 G1（大纲）和 G2（终审）闸门处会 `block`（阻塞），等 Human 决策。
 
@@ -72,7 +91,7 @@ hermes kanban unblock <task_id>
 
 ---
 
-## 4. 完成通知：任务跑完推送到 IM
+## 5. 完成通知：任务跑完推送到 IM
 
 两种方式：
 
@@ -107,19 +126,17 @@ hermes kanban notify-subscribe <task_id> --platform telegram \
 
 ---
 
-## 5. Telegram 配置（当前待办）
+## 6. Telegram 配置（当前待办）
 
 gateway 已在跑，但还没配 Telegram bot。配置步骤：
 
 ```bash
 # 1. @BotFather 创建 bot，拿到 token
-# 2. 写入 .env
+# 2. 写入 ~/.hermes/.env
 #    TELEGRAM_BOT_TOKEN=<token>
-# 3. 配置 gateway 连接
-hermes gateway setup        # 交互式选 Telegram，填 token
-# 4. 重启 gateway
-hermes gateway restart
-# 5. 验证
+# 3. 重启 gateway
+systemctl --user restart hermes-gateway-operator.service
+# 4. 验证
 hermes send --list          # 应出现 telegram 目标
 ```
 
@@ -127,7 +144,7 @@ hermes send --list          # 应出现 telegram 目标
 
 ---
 
-## 6. 飞书配置参考（已完成，备查）
+## 7. 飞书配置参考（已完成，备查）
 
 ```bash
 # 凭证写入 ~/.hermes/.env
@@ -135,7 +152,7 @@ hermes send --list          # 应出现 telegram 目标
 #   FEISHU_APP_SECRET=<app_secret>
 # 启用插件 + 重启
 hermes plugins enable feishu-platform
-hermes gateway restart
+systemctl --user restart hermes-gateway-operator.service
 # 发消息
 hermes send -t feishu:<chat_id> "消息内容"
 ```
@@ -154,7 +171,7 @@ hermes send -t feishu:<chat_id> "消息内容"
 
 ---
 
-## 7. Profile 路由配置（多平台 → operator）
+## 8. Profile 路由配置（多平台 → operator）
 
 如果同时使用飞书和 Telegram，可以配置 profile_routes 让所有消息都路由到 operator：
 
@@ -174,7 +191,7 @@ gateway:
 添加后重启 gateway：
 
 ```bash
-hermes gateway restart
+systemctl --user restart hermes-gateway-operator.service
 ```
 
 详见 `docs/profile-routing.md`。
@@ -186,6 +203,13 @@ hermes gateway restart
 - **工作流**（kanban 任务链）在终端里跑，有没有 IM 通知都不影响它完成。
 - **通知**（IM 推送）是并行的事——让你不用盯终端就能知道进度。
 - 如果 IM 没配好，**不要让 pipeline 停下来等通知**。先让流水线跑完，通知是锦上添花。
+
+## gateway 重启方式
+
+```bash
+systemctl --user restart hermes-gateway-operator.service    # 重启
+systemctl --user status hermes-gateway-operator.service     # 查看状态
+```
 
 ## 可用发送目标速查
 

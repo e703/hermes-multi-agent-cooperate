@@ -12,7 +12,7 @@
 #
 # 前提：
 #   - Hermes 已安装，已完成 setup（Blank Slate 或标准安装均可）
-#   - 当前 active profile 有可用的 model + API key
+#   - 当前 active profile 有可用的 model + API key（◆ 标记的 profile）
 #   - 已 git clone 本项目到本地
 # =============================================================================
 set -euo pipefail
@@ -51,36 +51,35 @@ if [ ! -d "$PROJECT_DIR/roles" ]; then
     exit 1
 fi
 
-# ---- Step 1: 启用 kanban 工具集 ----
+# ---- Step 1: 验证 kanban 可用（内置功能，不需额外启用） ----
 echo ""
-echo "━━━ [1/6] 启用 kanban 工具集 ━━━"
-echo "   Blank Slate 默认禁用 kanban，需要手动启用"
+echo "━━━ [1/5] 验证 kanban 可用性 ━━━"
+echo "   kanban 是 Hermes 内置功能，非工具集，无需手动启用"
 
-if hermes tools enable kanban 2>/dev/null; then
-    echo "   ✅ kanban 工具集已启用"
+if hermes kanban init 2>/dev/null; then
+    echo "   ✅ kanban 可用"
 else
-    echo "   ✅ kanban 工具集可能已启用，继续..."
+    echo "   ❌ kanban 初始化失败，请检查 Hermes 安装"
+    exit 1
 fi
 
-# ---- Step 2: 创建 operator 入口 profile ----
+# ---- Step 2: 创建 operator SOUL.md ----
 echo ""
-echo "━━━ [2/6] 创建 operator 入口 profile ━━━"
+echo "━━━ [2/5] 写入 operator SOUL.md ━━━"
 
-if ! hermes profile list 2>/dev/null | grep -qw "operator"; then
-    hermes profile create operator --clone --no-alias \
-        --description "团队入口：接收 Human 订单、启动 kanban 任务链、监控进度；不亲自做研究/写作/审校。"
-    echo "   ✅ operator profile 已创建"
-else
-    echo "   ✅ operator profile 已存在，跳过创建"
+if [ ! -f "$HOME/.hermes/profiles/operator/SOUL.md" ]; then
+    echo "   ⚠️  operator profile 不存在，请先创建:"
+    echo "      hermes profile create operator --clone --no-alias --description \"团队入口...\""
+    echo "      hermes profile use operator"
+    exit 1
 fi
 
-# 写入 SOUL.md（总是覆盖更新，确保最新）
 cp "$PROJECT_DIR/roles/operator.md" "$HOME/.hermes/profiles/operator/SOUL.md"
 echo "   ✅ operator SOUL.md 已写入"
 
 # ---- Step 3: 创建五个角色 profile ----
 echo ""
-echo "━━━ [3/6] 创建五个角色 profile ━━━"
+echo "━━━ [3/5] 创建五个角色 profile ━━━"
 
 declare -A ROLE_MAP
 ROLE_MAP[architect]="文档交付架构师：理解需求、制定大纲、拆解任务、挂依赖；不写长文初稿，不深度检索。"
@@ -110,7 +109,7 @@ done
 
 # ---- Step 4: 创建共享技能目录 ----
 echo ""
-echo "━━━ [4/6] 创建共享技能目录 ━━━"
+echo "━━━ [4/5] 创建共享技能目录 ━━━"
 
 SKILLS_DIR="$HOME/.hermes/profiles/operator/skills/productivity/professional-document-delivery"
 mkdir -p "$SKILLS_DIR/references"
@@ -125,15 +124,9 @@ done
 
 echo "   技能目录: $SKILLS_DIR"
 
-# ---- Step 5: 初始化 kanban 看板 ----
+# ---- Step 5: 创建订单目录模板 ----
 echo ""
-echo "━━━ [5/6] 初始化 kanban 看板 ━━━"
-
-hermes kanban init 2>/dev/null && echo "   ✅ kanban 看板已初始化" || echo "   ✅ kanban 看板已存在"
-
-# ---- Step 6: 创建订单目录模板 ----
-echo ""
-echo "━━━ [6/6] 创建订单目录模板 ━━━"
+echo "━━━ [5/5] 创建订单目录模板 ━━━"
 
 TEMPLATE_DIR="$HOME/.hermes/profiles/operator/templates/order"
 mkdir -p "$TEMPLATE_DIR"
@@ -149,12 +142,13 @@ echo "角色总览:"
 hermes profile list 2>/dev/null | grep -v "^$" | grep -v "Profile" | grep -v "─"
 echo ""
 echo "━━━ 下一步操作 ━━━"
-echo "  1. 启动 gateway:  hermes gateway start"
-echo "  2. 配置 IM 通知:  参考 human-gateway.md"
-echo "  3. 跑验证订单:    参考 deployment.md 的验证步骤"
+echo "  1. 安装并启动 gateway:  hermes gateway install"
+echo "     (安装后记得 sudo loginctl enable-linger \$(whoami))"
+echo "  2. 配置 IM 通知:        参考 human-gateway.md"
+echo "  3. 跑验证订单:          参考 deployment.md 的验证步骤"
 echo ""
 echo "━━━ 快速验证 ━━━"
-echo "  hermes profile list                        # 确认 6 个 profile 都在"
+echo "  hermes profile list                        # 确认 7 个 profile 都在"
 echo "  hermes kanban list                         # 看板就绪（空）"
 echo "  hermes kanban assignees                    # 确认 5 角色可路由"
-echo "========================================================================"
+echo "========================================================================="
