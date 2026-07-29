@@ -38,12 +38,10 @@
 
 ```bash
 # 安装依赖
-sudo apt update && sudo apt install -y git python3 python3-pip python3-venv
+sudo apt update 
 
 # 安装 Hermes
-git clone https://github.com/nousresearch/hermes-agent.git ~/.hermes/hermes-agent
-cd ~/.hermes/hermes-agent
-make install
+ curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh |bash
 
 # 初始化（选择 Blank Slate）
 hermes setup
