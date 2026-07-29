@@ -67,7 +67,7 @@ Hermes 多角色协作团队 —— 面向专业文档交付（研究 + 写作�
 ## 部署前须知
 
 - 角色命名沿用已验证实践（非新方案的 coordinator/editor/builder 命名）。
-- 所有命令在 Hermes v0.19 + mint-glm-5.2 验证过，计时数据见 `deployment.md`。
+- 所有命令在 Hermes v0.19 + glm-5.2 验证过，计时数据见 `deployment.md`。
 - 角色从 operator profile clone，继承 model + 工具集。
 - 先读 `architecture.md` 理解概念映射，再按 `deployment.md` 动手。
 - **不要在单订单路径跑通前就开五个角色**——低单量时 2 个（operator + architect 自带轻审）即可。
