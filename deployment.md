@@ -90,7 +90,7 @@ hermes profile list
 ## 第三步 — 克隆本项目
 
 ```bash
-git clone https://github.com/<你的仓库>/hermes-multi-agent-cooperate.git ~/workspace/hermes-multi-agent-cooperate
+git clone https://github.com/e703/hermes-multi-agent-cooperate.git ~/workspace/hermes-multi-agent-cooperate
 cd ~/workspace/hermes-multi-agent-cooperate
 ```
 
